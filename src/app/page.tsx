@@ -151,7 +151,7 @@ export default function HomePage() {
           </div>
 
           {/* Right: Form */}
-          <div className="w-full">
+          <div className="w-full" id="quote-form">
             <LeadForm />
           </div>
         </div>
@@ -330,11 +330,7 @@ export default function HomePage() {
           Call Now
         </a>
         <a
-          href="#top"
-          onClick={(e) => {
-            e.preventDefault();
-            document.querySelector("form")?.scrollIntoView({ behavior: "smooth", block: "center" });
-          }}
+          href="#quote-form"
           className="flex-1 flex items-center justify-center gap-2 bg-brand-orange text-white font-bold py-3 rounded-xl text-sm"
         >
           Get Free Quote
