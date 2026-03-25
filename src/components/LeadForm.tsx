@@ -3,255 +3,176 @@
 import { useState, useRef } from "react";
 
 interface FormData {
-  name: string;
-  phone: string;
-  address: string;
-  message: string;
-}
-
-interface FieldErrors {
-  name?: string;
-  phone?: string;
-  address?: string;
-  message?: string;
+    jobType: string;
+    roofType: string;
+    name: string;
+    phone: string;
+    address: string;
+    message: string;
 }
 
 type Status = "idle" | "loading" | "success" | "error";
 
-export default function LeadForm() {
-  const [form, setForm] = useState<FormData>({
-    name: "",
-    phone: "",
-    address: "",
-    message: "",
-  });
-  const [errors, setErrors] = useState<FieldErrors>({});
-  const [status, setStatus] = useState<Status>("idle");
-  const [serverError, setServerError] = useState("");
-  const submitted = useRef(false);
+const TOTAL_STEPS = 4;
 
-  function handleChange(
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) {
-    const { name, value } = e.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
-    // Clear error on edit
-    if (errors[name as keyof FieldErrors]) {
-      setErrors((prev) => ({ ...prev, [name]: undefined }));
-    }
-  }
+const jobTypes = [
+  { value: "repair", label: "Roof Repair", icon: "🔧", desc: "Fix a leak or damage" },
+  { value: "replacement", label: "Full Replacement", icon: "🏠", desc: "Replace the whole roof" },
+  { value: "inspection", label: "Inspection / Quote", icon: "🔍", desc: "Just want to know the cost" },
+  { value: "storm", label: "Storm Damage", icon: "🌀", desc: "Hurricane or wind damage" },
+  ];
 
-  function validateClient(): FieldErrors {
-    const errs: FieldErrors = {};
-    if (!form.name.trim() || form.name.trim().length < 2)
-      errs.name = "Please enter your full name.";
-    const cleanPhone = form.phone.replace(/\D/g, "");
-    if (cleanPhone.length < 10)
-      errs.phone = "Please enter a valid 10-digit phone number.";
-    if (!form.address.trim() || form.address.trim().length < 5)
-      errs.address = "Please enter your property address.";
-    if (!form.message.trim() || form.message.trim().length < 5)
-      errs.message = "Please describe your roofing issue.";
-    return errs;
-  }
+const roofTypes = [
+  { value: "shingle", label: "Shingle", icon: "🟫" },
+  { value: "tile", label: "Tile", icon: "🟧" },
+  { value: "metal", label: "Metal", icon: "⬜" },
+  { value: "flat", label: "Flat / TPO", icon: "⬛" },
+  { value: "unknown", label: "Not Sure", icon: "❓" },
+  ];
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (submitted.current) return; // prevent double submit
-
-    const clientErrors = validateClient();
-    if (Object.keys(clientErrors).length > 0) {
-      setErrors(clientErrors);
-      return;
-    }
-
-    submitted.current = true;
-    setStatus("loading");
-    setServerError("");
-
-    try {
-      const res = await fetch("/api/lead", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
-      });
-      const data = await res.json();
-
-      if (data.success) {
-        setStatus("success");
-      } else {
-        submitted.current = false;
-        setStatus("idle");
-        if (data.errors) {
-          setErrors(data.errors);
-        } else {
-          setServerError(data.error || "Something went wrong. Please try again.");
-        }
-      }
-    } catch {
-      submitted.current = false;
-      setStatus("idle");
-      setServerError("Network error. Please check your connection and try again.");
-    }
-  }
-
-  if (status === "success") {
+function ProgressBar({ step }: { step: number }) {
+    const pct = Math.round((step / TOTAL_STEPS) * 100);
     return (
-      <div className="bg-white rounded-2xl shadow-2xl p-8 text-center border-t-4 border-brand-orange">
-        <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-          <svg className="w-8 h-8 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-          </svg>
-        </div>
-        <h3 className="font-display text-2xl font-bold text-brand-navy mb-2 uppercase tracking-wide">
-          Request Submitted!
-        </h3>
-        <p className="text-brand-slate text-lg mb-1">
-          We&apos;re matching you with licensed Tampa contractors now.
-        </p>
-        <p className="text-brand-muted text-sm">
-          Expect to hear from a contractor within 24 hours.
-        </p>
-        <a
-          href="#quote-form"
-          className="mt-6 inline-flex items-center gap-2 bg-brand-orange hover:bg-brand-orange-dark text-white font-semibold py-3 px-6 rounded-xl transition-colors"
-        >
-          Submit Another Request
-        </a>
-      </div>
-    );
-  }
-
-  return (
-    <form
-      onSubmit={handleSubmit}
-      noValidate
-      className="bg-white rounded-2xl shadow-2xl p-6 md:p-8 border-t-4 border-brand-orange"
-    >
-      <h2 className="font-display text-2xl md:text-3xl font-bold text-brand-navy uppercase tracking-wide mb-1">
-        Get Your Free Quote
-      </h2>
-      <p className="text-brand-muted text-sm mb-6">
-        We respond within 15 minutes • No obligation
-      </p>
-
-      {serverError && (
-        <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg px-4 py-3 mb-4 text-sm">
-          {serverError}
-        </div>
-      )}
-
-      <div className="space-y-4">
-        {/* Name */}
-        <div>
-          <label htmlFor="name" className="block text-sm font-semibold text-brand-slate mb-1">
-            Full Name <span className="text-brand-orange">*</span>
-          </label>
-          <input
-            id="name"
-            name="name"
-            type="text"
-            autoComplete="name"
-            placeholder="John Smith"
-            value={form.name}
-            onChange={handleChange}
-            className={`w-full px-4 py-3 rounded-xl border-2 text-brand-navy placeholder-slate-400 text-base transition-colors focus:outline-none focus:border-brand-orange ${
-              errors.name ? "border-red-400 bg-red-50" : "border-slate-200 bg-slate-50 focus:bg-white"
-            }`}
-          />
-          {errors.name && <p className="text-red-600 text-xs mt-1">{errors.name}</p>}
-        </div>
-
-        {/* Phone */}
-        <div>
-          <label htmlFor="phone" className="block text-sm font-semibold text-brand-slate mb-1">
-            Phone Number <span className="text-brand-orange">*</span>
-          </label>
-          <input
-            id="phone"
-            name="phone"
-            type="tel"
-            autoComplete="tel"
-            placeholder="(813) 555-0100"
-            value={form.phone}
-            onChange={handleChange}
-            className={`w-full px-4 py-3 rounded-xl border-2 text-brand-navy placeholder-slate-400 text-base transition-colors focus:outline-none focus:border-brand-orange ${
-              errors.phone ? "border-red-400 bg-red-50" : "border-slate-200 bg-slate-50 focus:bg-white"
-            }`}
-          />
-          {errors.phone && <p className="text-red-600 text-xs mt-1">{errors.phone}</p>}
-        </div>
-
-        {/* Address */}
-        <div>
-          <label htmlFor="address" className="block text-sm font-semibold text-brand-slate mb-1">
-            Property Address <span className="text-brand-orange">*</span>
-          </label>
-          <input
-            id="address"
-            name="address"
-            type="text"
-            autoComplete="street-address"
-            placeholder="123 Oak Street, Tampa, FL 33601"
-            value={form.address}
-            onChange={handleChange}
-            className={`w-full px-4 py-3 rounded-xl border-2 text-brand-navy placeholder-slate-400 text-base transition-colors focus:outline-none focus:border-brand-orange ${
-              errors.address ? "border-red-400 bg-red-50" : "border-slate-200 bg-slate-50 focus:bg-white"
-            }`}
-          />
-          {errors.address && <p className="text-red-600 text-xs mt-1">{errors.address}</p>}
-        </div>
-
-        {/* Message */}
-        <div>
-          <label htmlFor="message" className="block text-sm font-semibold text-brand-slate mb-1">
-            What do you need help with? <span className="text-brand-orange">*</span>
-          </label>
-          <textarea
-            id="message"
-            name="message"
-            rows={3}
-            placeholder="e.g. Leaking roof after storm, missing shingles, need full replacement..."
-            value={form.message}
-            onChange={handleChange}
-            className={`w-full px-4 py-3 rounded-xl border-2 text-brand-navy placeholder-slate-400 text-base transition-colors focus:outline-none focus:border-brand-orange resize-none ${
-              errors.message ? "border-red-400 bg-red-50" : "border-slate-200 bg-slate-50 focus:bg-white"
-            }`}
-          />
-          {errors.message && <p className="text-red-600 text-xs mt-1">{errors.message}</p>}
-        </div>
-
-        {/* Submit */}
-        <button
-          type="submit"
-          disabled={status === "loading"}
-          className="w-full bg-brand-orange hover:bg-brand-orange-dark disabled:opacity-70 disabled:cursor-not-allowed text-white font-display font-bold text-xl uppercase tracking-widest py-4 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center gap-3"
-        >
-          {status === "loading" ? (
-            <>
-              <svg className="animate-spin w-5 h-5" viewBox="0 0 24 24" fill="none">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-              </svg>
-              Sending...
-            </>
-          ) : (
-            "Get My Free Quote →"
-          )}
-        </button>
-
-        <p className="text-center text-brand-muted text-xs">
-          🔒 Your information is safe. No spam, ever.
-        </p>
-      </div>
-    </form>
-  );
+          <div className="mb-6">
+                <div className="flex justify-between text-xs text-brand-muted mb-1.5">
+                        <span>Step {step} of {TOTAL_STEPS}</span>span>
+                        <span>{pct}% complete</span>span>
+                </div>div>
+                <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+                        <div className="h-full bg-brand-orange rounded-full transition-all duration-500" style={{ width: `${pct}%` }} />
+                </div>div>
+          </div>div>
+        );
 }
 
-function PhoneIcon() {
-  return (
-    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 7V5z" />
-    </svg>
-  );
-}
+export default function LeadForm() {
+    const [step, setStep] = useState(1);
+    const [form, setForm] = useState<FormData>({ jobType: "", roofType: "", name: "", phone: "", address: "", message: "" });
+    const [errors, setErrors] = useState<Partial<FormData>>({});
+    const [status, setStatus] = useState<Status>("idle");
+    const submitted = useRef(false);
+  
+    function set(field: keyof FormData, value: string) {
+       setForm((prev) => ({ ...prev, [field]: value }));
+          setErrors((prev) => ({ ...prev, [field]: undefined }));
+    }
+  
+    function validateStep(): boolean {
+          if (step === 1 && !form.jobType) { setErrors({ jobType: "Please select an option." }); return false; }
+          if (step === 2 && !form.roofType) { setErrors({ roofType: "Please select an option." }); return false; }
+          if (step === 3) {
+                  const e: Partial<FormData> = {};
+                  if (!form.name.trim() || form.name.trim().length < 2) e.name = "Please enter your full name.";
+                  if (form.phone.replace(/\D/g, "").length < 10) e.phone = "Please enter a valid phone number.";
+                  if (!form.address.trim() || form.address.trim().length < 5) e.address = "Please enter your address.";
+                  if (Object.keys(e).length > 0) { setErrors(e); return false; }
+          }
+          return true;
+    }
+  
+    function next() { if (validateStep()) setStep((s) => s + 1); }
+    function back() { setErrors({}); setStep((s) => s - 1); }
+  
+    async function handleSubmit(e: React.FormEvent) {
+          e.preventDefault();
+          if (submitted.current) return;
+          submitted.current = true;
+          setStatus("loading");
+          try {
+                  const res = await fetch("/api/lead", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ name: form.name, phone: form.phone, address: form.address, message: `Job Type: ${form.jobType} | Roof Type: ${form.roofType}${form.message ? ` | Notes: ${form.message}` : ""}` }),
+                  });
+                  const data = await res.json();
+                  if (data.success) { setStatus("success"); } else { submitted.current = false; setStatus("idle"); if (data.errors) setErrors(data.errors); }
+          } catch { submitted.current = false; setStatus("idle"); }
+    }
+  
+    if (status === "success") {
+          return (
+                  <div className="bg-white rounded-2xl shadow-2xl p-8 text-center border-t-4 border-brand-orange">
+                          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                    <svg className="w-8 h-8 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>svg>
+                          </div>div>
+                          <h3 className="font-display text-2xl font-bold text-brand-navy mb-2 uppercase tracking-wide">Request Submitted!</h3>h3>
+                          <p className="text-brand-slate text-lg mb-1">We&apos;re matching you with licensed Tampa contractors now.</p>p>
+                          <p className="text-brand-muted text-sm">Expect to hear from a contractor within 24 hours.</p>p>
+                  </div>div>
+                );
+    }
+  
+    return (
+          <form onSubmit={handleSubmit} noValidate className="bg-white rounded-2xl shadow-2xl p-6 md:p-8 border-t-4 border-brand-orange">
+                <h2 className="font-display text-2xl md:text-3xl font-bold text-brand-navy uppercase tracking-wide mb-1">Get Your Free Quotes</h2>h2>
+                <p className="text-brand-muted text-sm mb-5">No obligation · Takes 60 seconds</p>p>
+                <ProgressBar step={step} />
+          
+            {step === 1 && (
+                    <div>
+                              <p className="font-semibold text-brand-navy mb-4">What do you need done?</p>p>
+                              <div className="grid grid-cols-2 gap-3">
+                                {jobTypes.map((j) => (
+                                    <button key={j.value} type="button" onClick={() => set("jobType", j.value)} className={`flex flex-col items-start p-4 rounded-xl border-2 text-left transition-all ${form.jobType === j.value ? "border-brand-orange bg-brand-orange/5" : "border-slate-200 hover:border-brand-orange/50"}`}>
+                                                    <span className="text-2xl mb-1">{j.icon}</span>span>
+                                                    <span className="font-semibold text-brand-navy text-sm">{j.label}</span>span>
+                                                    <span className="text-xs text-brand-muted mt-0.5">{j.desc}</span>span>
+                                    </button>button>
+                                  ))}
+                              </div>div>
+                      {errors.jobType && <p className="text-red-600 text-xs mt-2">{errors.jobType}</p>p>}
+                              <button type="button" onClick={next} className="mt-5 w-full bg-brand-orange hover:bg-brand-orange-dark text-white font-display font-bold text-lg uppercase tracking-widest py-4 rounded-xl transition-all">Next →</button>button>
+                    </div>div>
+                )}
+          
+            {step === 2 && (
+                    <div>
+                              <p className="font-semibold text-brand-navy mb-4">What type of roof do you have?</p>p>
+                              <div className="grid grid-cols-3 gap-3">
+                                {roofTypes.map((r) => (
+                                    <button key={r.value} type="button" onClick={() => set("roofType", r.value)} className={`flex flex-col items-center p-3 rounded-xl border-2 text-center transition-all ${form.roofType === r.value ? "border-brand-orange bg-brand-orange/5" : "border-slate-200 hover:border-brand-orange/50"}`}>
+                                                    <span className="text-2xl mb-1">{r.icon}</span>span>
+                                                    <span className="font-semibold text-brand-navy text-xs">{r.label}</span>span>
+                                    </button>button>
+                                  ))}
+                              </div>div>
+                      {errors.roofType && <p className="text-red-600 text-xs mt-2">{errors.roofType}</p>p>}
+                              <div className="flex gap-3 mt-5">
+                                          <button type="button" onClick={back} className="flex-1 border-2 border-slate-200 text-brand-slate font-bold py-3 rounded-xl">← Back</button>button>
+                                          <button type="button" onClick={next} className="flex-[2] bg-brand-orange hover:bg-brand-orange-dark text-white font-display font-bold text-lg uppercase tracking-widest py-3 rounded-xl">Next →</button>button>
+                              </div>div>
+                    </div>div>
+                )}
+          
+            {step === 3 && (
+                    <div className="space-y-4">
+                              <p className="font-semibold text-brand-navy mb-2">Where should we send your quotes?</p>p>
+                              <div>
+                                          <label className="block text-sm font-semibold text-brand-slate mb-1">Full Name <span className="text-brand-orange">*</span>span></label>label>
+                                          <input type="text" autoComplete="name" placeholder="John Smith" value={form.name} onChange={(e) => set("name", e.target.value)} className={`w-full px-4 py-3 rounded-xl border-2 text-brand-navy placeholder-slate-400 text-base focus:outline-none focus:border-brand-orange ${errors.name ? "border-red-400 bg-red-50" : "border-slate-200 bg-slate-50 focus:bg-white"}`} />
+                                {errors.name && <p className="text-red-600 text-xs mt-1">{errors.name}</p>p>}
+                              </div>div>
+                              <div>
+                                          <label className="block text-sm font-semibold text-brand-slate mb-1">Phone Number <span className="text-brand-orange">*</span>span></label>label>
+                                          <input type="tel" autoComplete="tel" placeholder="(813) 555-0100" value={form.phone} onChange={(e) => set("phone", e.target.value)} className={`w-full px-4 py-3 rounded-xl border-2 text-brand-navy placeholder-slate-400 text-base focus:outline-none focus:border-brand-orange ${errors.phone ? "border-red-400 bg-red-50" : "border-slate-200 bg-slate-50 focus:bg-white"}`} />
+                                {errors.phone && <p className="text-red-600 text-xs mt-1">{errors.phone}</p>p>}
+                              </div>div>
+                              <div>
+                                          <label className="block text-sm font-semibold text-brand-slate mb-1">Property Address <span className="text-brand-orange">*</span>span></label>label>
+                                          <input type="text" autoComplete="street-address" placeholder="123 Oak Street, Tampa, FL 33601" value={form.address} onChange={(e) => set("address", e.target.value)} className={`w-full px-4 py-3 rounded-xl border-2 text-brand-navy placeholder-slate-400 text-base focus:outline-none focus:border-brand-orange ${errors.address ? "border-red-400 bg-red-50" : "border-slate-200 bg-slate-50 focus:bg-white"}`} />
+                                {errors.address && <p className="text-red-600 text-xs mt-1">{errors.address}</p>p>}
+                              </div>div>
+                              <div className="flex gap-3 pt-1">
+                                          <button type="button" onClick={back} className="flex-1 border-2 border-slate-200 text-brand-slate font-bold py-3 rounded-xl">← Back</button>button>
+                                          <button type="button" onClick={next} className="flex-[2] bg-brand-orange hover:bg-brand-orange-dark text-white font-display font-bold text-lg uppercase tracking-widest py-3 rounded-xl">Next →</button>button>
+                              </div>div>
+                    </div>div>
+                )}
+          
+            {step === 4 && (
+                    <div>
+                              <p className="font-semibold text-brand-navy mb-4">Any additional details? <span className="text-brand-muted font-normal">(optional)</span>span></p>p>
+                              <div className="bg-slate-50 rounded-xl p-4 mb-4 text-sm space-y-1.5 border border-slate-100">
+                                          <div className="flex justify-between"><span className="text-brand-muted">Job Type</span>span><span className="font-semibold text-brand-navy capitalize">{form.jobType}</span>span></div>div>
+                                          <div className="flex justify-between"><span className="text-brand-muted">Roof Type</span>span><span className="font-semibold text-brand-navy capitalize">{form.roofType}</span>span></div>div>
+                                          <div className="flex justify-between"><span className="text-brand-muted">Name</span>span><span className="font-semibold text-brand-navy">{form.name}</div>
