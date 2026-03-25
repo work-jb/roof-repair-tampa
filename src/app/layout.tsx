@@ -17,13 +17,13 @@ const barlow = Barlow({
 });
 
 export const metadata: Metadata = {
-  title: "Free Roof Repair Quote in Tampa | Fast & Reliable",
+  title: "Tampa Roof Quotes | Free Roofing Quotes from Local Contractors",
   description:
-    "Get a free roof repair estimate from licensed Tampa roofing professionals. Fast response, trusted local contractors. Call or submit a quote request now.",
-  keywords: "roof repair Tampa, Tampa roofing, roof replacement Tampa, free roof estimate Tampa",
+    "Get free roofing quotes from licensed Tampa contractors. Compare prices, no obligation. We match Tampa Bay homeowners with vetted local roofers for free.",
+  keywords: "free roof quotes Tampa, Tampa roofing quotes, compare roofing contractors Tampa, roof estimate Tampa FL",
   openGraph: {
-    title: "Free Roof Repair Quote in Tampa",
-    description: "Fast, reliable local roofing professionals. Get your free quote today.",
+    title: "Tampa Roof Quotes — Free Quote Matching for Tampa Homeowners",
+    description: "Compare free quotes from licensed Tampa roofing contractors. No obligation, no cost to homeowners.",
     type: "website",
   },
 };

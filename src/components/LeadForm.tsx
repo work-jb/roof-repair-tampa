@@ -104,20 +104,19 @@ export default function LeadForm() {
           </svg>
         </div>
         <h3 className="font-display text-2xl font-bold text-brand-navy mb-2 uppercase tracking-wide">
-          You&apos;re All Set!
+          Request Submitted!
         </h3>
         <p className="text-brand-slate text-lg mb-1">
-          We&apos;ll contact you within <strong>15 minutes</strong> during business hours.
+          We&apos;re matching you with licensed Tampa contractors now.
         </p>
         <p className="text-brand-muted text-sm">
-          For urgent issues, call us directly below.
+          Expect to hear from a contractor within 24 hours.
         </p>
         <a
-          href="tel:+18135550100"
+          href="#quote-form"
           className="mt-6 inline-flex items-center gap-2 bg-brand-orange hover:bg-brand-orange-dark text-white font-semibold py-3 px-6 rounded-xl transition-colors"
         >
-          <PhoneIcon />
-          Call Now: (813) 555-0100
+          Submit Another Request
         </a>
       </div>
     );
